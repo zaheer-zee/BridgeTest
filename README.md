@@ -9,7 +9,7 @@
 ```mermaid
 graph LR
     A[Next.js Frontend] -->|HTTP POST| B(Zapier Catch Hook)
-    B -->|Transform & Route| C[(Airtable DB)]
+    B -->|Transform & Route| C[(Google Sheets)]
 ```
 
 The system logic is built upon a **Decoupled Hybrid Architecture**. In this model, the client-side presentation layer (Frontend) is distinctly separated from the backend logic and database layer. Instead of immediately building and maintaining a custom monolithic backend, we are utilizing **Webhooks integrated with Zapier** to handle data routing, business logic, and database operations.
@@ -24,8 +24,8 @@ The system logic is built upon a **Decoupled Hybrid Architecture**. In this mode
   *(Chosen for its robust ecosystem, performance optimizations, and seamless deployment capabilities (via Vercel), allowing for a highly polished, production-ready user interface).*
 * **Logic/Integration**: **Zapier (via Catch Hooks)**
   *(Acts as the middleware controller, transforming and routing incoming requests instantly).*
-* **Storage/Database**: **Airtable**
-  *(Provides a flexible, relational database structure that is vastly superior to Google Sheets for managing exact data types, foreign keys, and scaling structured records).*
+* **Storage/Database**: **Google Sheets**
+  *(Provides an exceptionally accessible and familiar interface for stakeholders to view, manage, and export data immediately, perfect for rapid MVP validation).*
 
 ## 3. Data Flow Mapping
 **The User Journey (Frontend to Database):**
@@ -35,7 +35,7 @@ sequenceDiagram
     actor User
     participant UI as Next.js Frontend
     participant Zapier as Zapier Webhook
-    participant DB as Airtable Base
+    participant DB as Google Sheets
 
     User->>UI: Submit Form Action
     UI->>UI: Client-Side Validation
@@ -53,7 +53,7 @@ sequenceDiagram
 4. **Processing (Zapier)**: 
    - The Catch Hook receives the payload instantly.
    - Zapier formats the data, applies any necessary conditional logic, and enriches it (e.g., adding timestamp metadata).
-5. **Storage**: Zapier automatically maps and pushes the formatted data as a new record into the designated **Airtable** base and table.
+5. **Storage**: Zapier automatically maps and pushes the formatted data as a new row into the designated **Google Sheets** spreadsheet.
 6. **Post-Action (Optional)**: Zapier triggers an automated email response to the user or pings a Slack/Discord channel to notify the team of a successful entry.
 
 ## 4. API & Webhook Documentation
