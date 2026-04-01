@@ -101,3 +101,29 @@ The architecture is inherently built for scale. Because the frontend relies on g
 
 **The "Next Step"**
 > "For Milestone 2, we will be building out the high-fidelity UI and live-testing the Zapier triggers."
+
+---
+
+## 6. Proposed Project Directory Structure
+*The initial setup for Milestone 2 frontend implementation.*
+
+```text
+BridgeLoop/
+├── public/                 # Static assets (images, icons, fonts)
+├── src/                    
+│   ├── app/                # Next.js App Router
+│   │   ├── api/            # Serverless API routes (Secure webhook callers)
+│   │   │   └── submit/     # Endpoint to handle frontend form -> Zapier logic
+│   │   ├── layout.tsx      # Global application layout 
+│   │   └── page.tsx        # Main entry point (Landing Page)
+│   ├── components/         # Reusable React UI components
+│   │   ├── ui/             # Generic UI elements (Buttons, Inputs)
+│   │   └── form/           # Smart form components
+│   └── lib/                # Shared utilities
+│       ├── utils.ts        # Helper functions
+│       └── schema.ts       # Zod schemas for validation
+├── .env.local              # Secret variables (e.g., ZAPIER_CATCH_HOOK_URL)
+├── next.config.mjs         # Next.js configuration
+├── package.json            # Project dependencies and scripts
+└── README.md               # Architecture and documentation
+```
