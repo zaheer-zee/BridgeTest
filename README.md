@@ -5,6 +5,13 @@
 
 ## 1. Architecture Overview
 **The "Frontend-to-Automation" Flow**
+
+```mermaid
+graph LR
+    A[Next.js Frontend] -->|HTTP POST| B(Zapier Catch Hook)
+    B -->|Transform & Route| C[(Airtable DB)]
+```
+
 The system logic is built upon a **Decoupled Hybrid Architecture**. In this model, the client-side presentation layer (Frontend) is distinctly separated from the backend logic and database layer. Instead of immediately building and maintaining a custom monolithic backend, we are utilizing **Webhooks integrated with Zapier** to handle data routing, business logic, and database operations.
 
 **Why Webhooks + Zapier is the Optimal Choice for a Scalable MVP:**
@@ -22,6 +29,24 @@ The system logic is built upon a **Decoupled Hybrid Architecture**. In this mode
 
 ## 3. Data Flow Mapping
 **The User Journey (Frontend to Database):**
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Next.js Frontend
+    participant Zapier as Zapier Webhook
+    participant DB as Airtable Base
+
+    User->>UI: Submit Form Action
+    UI->>UI: Client-Side Validation
+    UI->>Zapier: POST request with JSON payload
+    Zapier-->>UI: 200 Success Response
+    UI->>User: Show Success State
+    Zapier->>Zapier: Format Data & Add Metadata
+    Zapier->>DB: Create Record
+    Zapier-->>User: (Optional) Email / Slack Notification
+```
+
 1. **User Interaction**: The user fills out a form or triggers a core action on the Next.js frontend interface.
 2. **Data Capture**: The frontend captures the input, synchronizes state, and constructs a formatted JSON payload.
 3. **Transmission**: The frontend makes an asynchronous HTTP POST request (`fetch` or `axios`) containing the JSON payload securely to a unique **Zapier Catch Hook URL**.
