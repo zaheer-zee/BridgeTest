@@ -55,7 +55,7 @@ graph TD
 ---
 
 ## Appendix: Strategic Project Defense (Review Q&A)
-*Crucial talking points for the review with Abhishek.*
+*Crucial talking points for the project review.*
 
 **The "Why"**
 > "We are using Zapier, ChatGPT, and Google Sheets to handle the backend logic today so we can instantly validate our AI workflows. This allows us to focus 100% on the User Experience (UX) and Next.js Frontend design during Milestone 2. It allows us to pivot our AI prompts or threshold logic without rewriting backend server code."
