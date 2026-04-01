@@ -1,95 +1,56 @@
 # BridgeLoop
 
 # Milestone 1: Setup, Research, and Architecture
-**Project Architecture Blueprint: Decoupled Hybrid Architecture**
+**Project Architecture Blueprint: AI-Assisted Competitive Intelligence**
 
-## 1. Architecture Overview
-**The "Frontend-to-Automation" Flow**
+## 1. Project Overview
+BridgeLoop is an automated competitive tracking system. It leverages a **Decoupled Hybrid Architecture** to monitor competitors via Google Alerts, process data through ChatGPT for sentiment and pricing analysis, and store insights in Google Sheets. 
 
-```mermaid
-graph LR
-    A[Next.js Frontend] -->|HTTP POST| B(Zapier Catch Hook)
-    B -->|Transform & Route| C[(Google Sheets)]
-```
-
-The system logic is built upon a **Decoupled Hybrid Architecture**. In this model, the client-side presentation layer (Frontend) is distinctly separated from the backend logic and database layer. Instead of immediately building and maintaining a custom monolithic backend, we are utilizing **Webhooks integrated with Zapier** to handle data routing, business logic, and database operations.
-
-**Why Webhooks + Zapier is the Optimal Choice for a Scalable MVP:**
-1. **Rapid Iteration**: Abstracting the backend logic into Zapier allows us to modify business rules, add integrations, and manipulate data flows visually without writing, testing, or deploying server-side code.
-2. **Reduced Overhead**: It eliminates the need for managing server infrastructure, API gateways, and database connections during the critical early validation phases.
-3. **Decoupled Scalability**: When the project outgrows Zapier in future milestones, the frontend remains entirely untouched; we simply point the existing webhooks to our new custom backend endpoints.
+This architecture allows for rapid iteration using Zapier as the automation engine, enabling the team to validate the business logic immediately while dedicating 100% of the effort to building a robust Frontend UI (Next.js) for configuring these alerts and viewing data in the upcoming Milestone 2.
 
 ## 2. The Tech Stack
-* **Frontend**: **Next.js** 
-  *(Chosen for its robust ecosystem, performance optimizations, and seamless deployment capabilities (via Vercel), allowing for a highly polished, production-ready user interface).*
-* **Logic/Integration**: **Zapier (via Catch Hooks)**
-  *(Acts as the middleware controller, transforming and routing incoming requests instantly).*
-* **Storage/Database**: **Google Sheets**
-  *(Provides an exceptionally accessible and familiar interface for stakeholders to view, manage, and export data immediately, perfect for rapid MVP validation).*
+* **Frontend (Milestone 2 Focus)**: **Next.js** 
+  *(Acts as the Competitor Profile Management interface where users securely enter competitor names, keywords, and baselines).*
+* **Data Ingestion**: **Google Alerts** 
+  *(Monitors the web for competitor names, product launches, and pricing updates).*
+* **Automation & Logic**: **Zapier & ChatGPT API** 
+  *(Zapier catches alerts and routes data. ChatGPT processes structured prompts to summarize updates, extract pricing, and classify sentiment).*
+* **Storage & Processing**: **Google Sheets** 
+  *(Stores baseline pricing, executes rule-based ±5% threshold formulas, and initially hosts the visual trend dashboard).*
+* **Reporting**: **Canva** 
+  *(Used to generate structured weekly insight reports based on the AI summaries).*
 
-## 3. Data Flow Mapping
-**The User Journey (Frontend to Database):**
+## 3. Architecture & Data Flow Mapping
+**The "Config-to-Insight" Flow**
 
 ```mermaid
-sequenceDiagram
-    actor User
-    participant UI as Next.js Frontend
-    participant Zapier as Zapier Webhook
-    participant DB as Google Sheets
-
-    User->>UI: Submit Form Action
-    UI->>UI: Client-Side Validation
-    UI->>Zapier: POST request with JSON payload
-    Zapier-->>UI: 200 Success Response
-    UI->>User: Show Success State
-    Zapier->>Zapier: Format Data & Add Metadata
-    Zapier->>DB: Create Record
-    Zapier-->>User: (Optional) Email / Slack Notification
+graph TD
+    UI[Next.js Frontend] -->|Setup Competitors & Baselines| DB[(Google Sheets)]
+    GA[Google Alerts] -->|Push New Content| Z1(Zapier Catch Hook)
+    Z1 -->|Raw Text Data| GPT[ChatGPT API]
+    GPT -->|Sentiment & Summaries| Z2(Zapier Formatter)
+    Z2 -->|Log New Record| DB
+    DB -->|±5% Price Change Detected| Z3(Zapier Trigger)
+    Z3 -->|Action| Alert[Automated Email Alert]
 ```
 
-1. **User Interaction**: The user fills out a form or triggers a core action on the Next.js frontend interface.
-2. **Data Capture**: The frontend captures the input, synchronizes state, and constructs a formatted JSON payload.
-3. **Transmission**: The frontend makes an asynchronous HTTP POST request (`fetch` or `axios`) containing the JSON payload securely to a unique **Zapier Catch Hook URL**.
-4. **Processing (Zapier)**: 
-   - The Catch Hook receives the payload instantly.
-   - Zapier formats the data, applies any necessary conditional logic, and enriches it (e.g., adding timestamp metadata).
-5. **Storage**: Zapier automatically maps and pushes the formatted data as a new row into the designated **Google Sheets** spreadsheet.
-6. **Post-Action (Optional)**: Zapier triggers an automated email response to the user or pings a Slack/Discord channel to notify the team of a successful entry.
+**Step-by-Step Data Journey:**
+1. **Competitor Setup**: A user enters competitor details (name, target keywords, baseline pricing) on the Next.js Frontend.
+2. **Alert Trigger**: Google Alerts (pre-configured) detects a keyword match and Zapier pulls the new alert.
+3. **AI-Assisted Summarization**: Zapier sends the alert content to ChatGPT. ChatGPT generates a concise summary of the update, records any pricing mentions, and classifies sentiment (Positive, Neutral, Negative).
+4. **Storage & Logic Detection**: The processed data is logged into **Google Sheets**. A formula dynamically compares the new price mention against the stored baseline value.
+5. **Automated Tracking Alert**: If the threshold logic defines a "significant change" (e.g., a ±5% shift in pricing or a sudden spike in negative sentiment), Zapier triggers an immediate automated email notification to the team.
+6. **Dashboard Review**: The Google Sheets trend dashboard updates to display the frequency of competitor updates, pricing change history, and sentiment distribution.
 
-## 4. API & Webhook Documentation
-**Webhook Integration Specification**
+## 4. Automation & Threshold Rules
+* **Pricing Tracking**: Baseline prices are manually stored during initial data entry. New mentions trigger a calculation comparing the previous vs current values.
+* **Review Sentiment**: Publicly available excerpts are processed through structured prompts to classify as Positive, Neutral, or Negative to estimate weekly trend direction (instead of relying on a pre-trained enterprise machine learning model).
 
-* **Endpoint**: `[Provided by Zapier Catch Hook]`
-* **Method**: `POST`
-* **Content-Type**: `application/json`
-
-**Expected JSON Payload Structure:**
-```json
-{
-  "user_id": "uuid-1234-5678",
-  "first_name": "Jane",
-  "last_name": "Doe",
-  "email": "jane.doe@example.com",
-  "action_type": "form_submission",
-  "payload_data": {
-    "preferences": ["option_a", "option_c"],
-    "message": "Interested in the beta program."
-  },
-  "metadata": {
-    "source_url": "https://our-app.com/signup",
-    "timestamp": "2026-04-01T12:00:00Z"
-  }
-}
-```
-*(Note: The Next.js frontend is responsible for ensuring this structure is strictly enforced prior to transmission).*
-
-## 5. Security & Scalability
-**Current MVP Security (Data Validation):**
-- **Client-Side Validation**: All data will be strictly typed and validated on the frontend (e.g., using libraries like Zod or Yup) before the webhook is ever triggered. This prevents malformed data and limits bad inputs from hitting the Zapier pipelines.
-- **Obscured Webhooks**: The Zapier hook URLs will be stored as environment variables (`.env`) in the Next.js project and executed via **Next.js API Routes** (Serverless Functions) to hide the specific Zapier destination URLs from the client's public browser inspector.
-
-**Transition to Custom Backend (Milestone 3):**
-The architecture is inherently built for scale. Because the frontend relies on generic, structured POST requests, transitioning to a custom backend (e.g., Node.js / Python) in Milestone 3 will require **zero major changes to the UI components**. We will simply update the Next.js API route to point to our newly deployed backend REST API instead of Zapier, successfully swapping out the middleware layer seamlessly.
+## 5. Security & System Limitations
+* **UI Abstraction**: The Next.js API routes will secure webhook endpoints, ensuring public traffic cannot inject false configuration data into the pipeline.
+* **Public Data Dependency**: The system strictly depends on publicly available Google Alerts and may not capture 100% of competitor activity. Pricing tracking depends solely on values explicitly mentioned in those alerts.
+* **AI Interpretation**: Sentiment estimation and summarization are prompt-based. The system acknowledges that AI generated summaries may contain interpretation errors.
+* **Scope Definition**: The dashboard is an assistive monitoring tool demonstrating automation and AI capabilities, not an enterprise-level competitive intelligence software.
 
 ---
 
@@ -97,33 +58,7 @@ The architecture is inherently built for scale. Because the frontend relies on g
 *Crucial talking points for the review with Abhishek.*
 
 **The "Why"**
-> "We are using Zapier to handle the backend logic today so we can focus 100% on the User Experience (UX) and Frontend design during Milestone 2. It allows us to pivot the logic without rewriting server code."
+> "We are using Zapier, ChatGPT, and Google Sheets to handle the backend logic today so we can instantly validate our AI workflows. This allows us to focus 100% on the User Experience (UX) and Next.js Frontend design during Milestone 2. It allows us to pivot our AI prompts or threshold logic without rewriting backend server code."
 
 **The "Next Step"**
-> "For Milestone 2, we will be building out the high-fidelity UI and live-testing the Zapier triggers."
-
----
-
-## 6. Proposed Project Directory Structure
-*The initial setup for Milestone 2 frontend implementation.*
-
-```text
-BridgeLoop/
-├── public/                 # Static assets (images, icons, fonts)
-├── src/                    
-│   ├── app/                # Next.js App Router
-│   │   ├── api/            # Serverless API routes (Secure webhook callers)
-│   │   │   └── submit/     # Endpoint to handle frontend form -> Zapier logic
-│   │   ├── layout.tsx      # Global application layout 
-│   │   └── page.tsx        # Main entry point (Landing Page)
-│   ├── components/         # Reusable React UI components
-│   │   ├── ui/             # Generic UI elements (Buttons, Inputs)
-│   │   └── form/           # Smart form components
-│   └── lib/                # Shared utilities
-│       ├── utils.ts        # Helper functions
-│       └── schema.ts       # Zod schemas for validation
-├── .env.local              # Secret variables (e.g., ZAPIER_CATCH_HOOK_URL)
-├── next.config.mjs         # Next.js configuration
-├── package.json            # Project dependencies and scripts
-└── README.md               # Architecture and documentation
-```
+> "For Milestone 2, we will be building out the high-fidelity UI to manage competitor profiles and live-testing the Zapier-to-ChatGPT AI triggers."
